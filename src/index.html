@@ -21,44 +21,68 @@
         <div class="head-note"><span class="live-dot"></span>A seat at the table.</div>
       </header>
       <div id="bank" class="bank" data-state="connecting"></div>
-      <section class="stage table" aria-label="Blackjack table">
-        <div class="stage-meta">DEALER STANDS ON ALL 17</div>
-        <div class="stage-badge">Natural pays 3:2</div>
-        <div class="table-ring"></div>
-        <div class="table-layout">
-          <div class="dealer-area">
-            <div class="hand-caption">DEALER · <span id="dealer-total">—</span></div>
-            <div class="cards" id="dealer-cards"></div>
+      <section class="stage table" id="table" aria-label="Blackjack table">
+        <div class="seat">
+          <div class="hand-info">
+            <span class="seat-name">Dealer</span><span class="total" id="dealer-total"></span
+            ><span class="tag" id="dealer-tag"></span><span class="tag" id="insured"></span>
           </div>
-          <div class="table-wordmark" aria-hidden="true">HookedIn</div>
-          <div class="hands" id="hands"></div>
-          <div id="insurance-note"></div>
+          <div class="cards" id="dealer-cards"></div>
         </div>
-        <div class="table-outcome hidden" id="outcome" aria-live="polite"></div>
+        <div class="felt">
+          <p class="felt-rules">Blackjack pays 3 to 2<small>Dealer stands on all 17 · Insurance pays 2 to 1</small></p>
+          <div class="offer hidden" id="offer">
+            <span>Insurance? <strong id="offer-cost"></strong></span
+            ><button class="secondary" id="insurance" type="button" aria-label="Take insurance" aria-keyshortcuts="I">
+              Yes <kbd aria-hidden="true">I</kbd></button
+            ><button
+              class="secondary"
+              id="decline-insurance"
+              type="button"
+              aria-label="No insurance"
+              aria-keyshortcuts="N"
+            >
+              No <kbd aria-hidden="true">N</kbd>
+            </button>
+          </div>
+          <div class="result hidden" id="result">
+            <strong id="result-title"></strong><span id="result-amount"></span>
+          </div>
+        </div>
+        <div class="seats">
+          <div class="seat" id="hand-0">
+            <div class="cards"></div>
+            <div class="hand-info"><span class="total"></span><span class="tag"></span></div>
+          </div>
+          <div class="seat hidden" id="hand-1">
+            <div class="cards"></div>
+            <div class="hand-info"><span class="total"></span><span class="tag"></span></div>
+          </div>
+        </div>
       </section>
       <section class="controls" aria-label="Bet controls">
-        <div class="field">
-          <label for="stake">Initial bet</label>
-          <div class="input-wrap">
-            <input id="stake" inputmode="decimal" value="0.000001" autocomplete="off" aria-label="Stake in ETH" /><span
-              data-asset
-              >ETH</span
-            >
-          </div>
+        <div class="input-wrap">
+          <label for="stake">Bet</label
+          ><input id="stake" inputmode="decimal" value="0.000001" autocomplete="off" aria-label="Stake in ETH" /><span
+            data-asset
+            >ETH</span
+          ><button class="tool" id="half" type="button" aria-label="Halve the bet">½</button
+          ><button class="tool" id="twice" type="button" aria-label="Double the bet">2×</button>
         </div>
-        <div class="field">
-          <div class="field-label" id="cash-label">Total wager</div>
-          <div class="readout"><strong id="cash">—</strong><span data-asset>ETH</span></div>
+        <div class="moves" role="group" aria-label="Your move">
+          <button class="secondary" id="hit" type="button" aria-keyshortcuts="H">
+            Hit <kbd aria-hidden="true">H</kbd></button
+          ><button class="secondary" id="stand" type="button" aria-keyshortcuts="S">
+            Stand <kbd aria-hidden="true">S</kbd></button
+          ><button class="secondary" id="double" type="button" aria-keyshortcuts="D">
+            Double <kbd aria-hidden="true">D</kbd></button
+          ><button class="secondary" id="split" type="button" aria-keyshortcuts="P">
+            Split <kbd aria-hidden="true">P</kbd>
+          </button>
         </div>
-        <div class="action-buttons">
-          <button class="primary" id="deal" type="button">Deal me in ↗</button
-          ><button class="primary hidden" id="hit" type="button">Hit +</button
-          ><button class="secondary hidden" id="stand" type="button">Stand</button
-          ><button class="secondary hidden" id="double" type="button">Double</button
-          ><button class="secondary hidden" id="split" type="button">Split</button
-          ><button class="primary hidden" id="insurance" type="button">Insurance</button
-          ><button class="secondary hidden" id="decline-insurance" type="button">No insurance</button>
-        </div>
+        <button class="primary" id="deal" type="button" aria-keyshortcuts="Space">
+          <span id="deal-label">Deal</span> <kbd aria-hidden="true">Space</kbd>
+        </button>
       </section>
       <div class="status" id="status" role="status" aria-live="polite">Connecting your wallet…</div>
       <footer class="foot">
@@ -66,27 +90,19 @@
           A sandboxed game by HookedIn Studio.<br />Your funds stay in the independent client.
         </div>
         <details class="rules">
-          <summary>Table rules</summary>
+          <summary>How to play</summary>
           <p>
-            Unlimited decks. Dealer stands on soft 17 and checks for blackjack before you play. A natural blackjack pays
-            3:2; two naturals push. Ordinary wins pay 1:1 and ties return the bet.
+            Beat the dealer without going over 21. Set your bet and deal. Hit takes a card, Stand keeps your hand,
+            Double doubles your bet for exactly one more card, and Split plays a pair as two hands for a second bet. On
+            a keyboard, Space deals; H, S, D and P hit, stand, double and split; I and N take or refuse insurance.
           </p>
           <p>
-            Double on any first two cards, including after a split, and receive exactly one more card. Split an initial
-            equal-value pair once into two hands with an additional equal bet. No re-splitting. Split aces receive one
-            card each; a split 21 is not a natural blackjack. Both hands play against the same dealer.
+            Blackjack pays 3:2, other wins 1:1, and a tie returns your bet. The dealer stands on all 17s and checks for
+            blackjack before you play; against an ace, insurance costs half your bet and pays 2:1. Double on any first
+            two cards, split a pair once, and split aces take one card each; 21 after a split pays 1:1. No surrender.
+            The deck is unlimited: every card is a fresh draw from all 52.
           </p>
-          <p>
-            Insurance is offered when the dealer shows an Ace. It costs half the initial bet and pays 2:1 if the dealer
-            has blackjack. There is no surrender. Doubles, splits and insurance require enough additional money in the
-            game balance.
-          </p>
-          <p>
-            With optimal play through a completed hand, the calculated house edge is 0.5703880123% per initial bet
-            (99.4296119877% return on that basis), rounding to 0.57%. Commissions do not reduce the displayed payouts.
-            Stake must be an even number of wei. Stopping through the wallet mid-hand is outside these completed-hand
-            figures.
-          </p>
+          <p>With the best play, the house edge is 0.57% of your initial bet.</p>
         </details>
       </footer>
     </main>

@@ -7,8 +7,9 @@ this repository.
 
 ## How to play
 
-With ETH, give the game money with **Add funds**; practice needs none. Set a stake and deal. The table rules follow
-Stake Originals Blackjack:
+With ETH, give the game money with **Add funds**; practice needs none. Set your bet, halve or double it with **½** and
+**2×**, and deal; the bet stays for the next hand, so dealing again repeats it. On a keyboard, Space deals, H hits, S
+stands, D doubles, P splits, and I or N take or refuse insurance. The table rules follow Stake Originals Blackjack:
 
 | Rule            | Behaviour                                                                                                 |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
@@ -43,9 +44,10 @@ writes the table from the rules, and `npm test` fails if it does not match them.
 With optimal play through a completed hand the house edge is exactly
 `40248916821673328324125295 / 7056410014866816666030739693`, 0.5703880122736% of the initial bet.
 [test/rules.test.ts](test/rules.test.ts) proves it against an independent oracle that works from raw totals, without
-the graph or the pricing engine, and checks each table rule above. [test/funding.test.ts](test/funding.test.ts) checks
-that every action collapses into bets the casino admits and that reach each successor at its stated odds, and
-[test/round.test.ts](test/round.test.ts) plays a hand through the real wallet, reloading it midway.
+the graph or the pricing engine, checks each table rule above, and checks that the result the page shows for each hand
+is what the rules pay. [test/funding.test.ts](test/funding.test.ts) checks that every action collapses into bets the
+casino admits and that reach each successor at its stated odds, and [test/round.test.ts](test/round.test.ts) plays a
+hand through the real wallet, reloading it midway.
 
 The page is untrusted by design: it runs in a sandboxed frame and only asks the wallet for bets. The wallet verifies
 each bet it signs; that the cards come as often as an unlimited deck deals them is this page's claim, open source here.
@@ -61,7 +63,7 @@ npm run dev
 ```
 
 This serves the game at `http://127.0.0.1:4185/`, building it again on every page load. Open the wallet at
-[play.hookedin.com](https://play.hookedin.com), go to **Games**, choose **Open a game by URL** and paste that address.
+[play.hookedin.com](https://play.hookedin.com), choose **Open a game by its URL** under the games and paste that address.
 
 `npm test` type-checks, checks the funding table and runs the tests. `npm run build` writes `dist/`, plain static files
 with the page, `game.js` and `icon.svg`.

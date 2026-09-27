@@ -4,6 +4,7 @@ export interface Card {
   face: number;
   suit: number;
 }
+export type HandResult = 'blackjack' | 'win' | 'push' | 'lose' | 'bust';
 export function cardHand(cards: readonly Card[]) {
   return cards.reduce(
     (hand, card) => addCard(hand, Math.min(card.face, 10) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10),
@@ -38,4 +39,16 @@ export function blackjackTable(events: readonly RoundEvent[]) {
     }
   }
   return { hands, dealer, doubled, split, insured, dealerBlackjack };
+}
+/** What each of the player's hands came to in a finished round, read from the cards as the rules pay them. */
+export function handResults(table: ReturnType<typeof blackjackTable>): HandResult[] {
+  const dealer = cardHand(table.dealer).total;
+  return table.hands.map(cards => {
+    const { total } = cardHand(cards),
+      natural = !table.split && cards.length === 2 && total === 21;
+    if (total > 21) return 'bust';
+    if (table.dealerBlackjack) return natural ? 'push' : 'lose';
+    if (natural) return 'blackjack';
+    return dealer > 21 || total > dealer ? 'win' : total === dealer ? 'push' : 'lose';
+  });
 }

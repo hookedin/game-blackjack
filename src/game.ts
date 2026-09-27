@@ -1,131 +1,158 @@
 import { HookedIn } from '@hookedin/play/sdk/sdk';
 import { RoundClient } from '@hookedin/play/sdk/round';
 import type { RoundState } from '@hookedin/play/sdk/round';
-import { blackjackState, createBlackjack } from './rules.ts';
-import { blackjackTable, cardHand } from './view.ts';
-import type { Card } from './view.ts';
-import { blackjackFunding } from './funding.ts';
 import { mountBank } from '@hookedin/play/sdk/bank';
+import { blackjackState, createBlackjack } from './rules.ts';
+import { blackjackFunding } from './funding.ts';
+import { blackjackTable, cardHand, handResults } from './view.ts';
+import type { Card } from './view.ts';
 const round = new RoundClient(HookedIn, setup => createBlackjack({ stake: BigInt(setup.stake) }), blackjackFunding);
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const bank = mountBank($('bank'), { round });
+const stake = $<HTMLInputElement>('stake');
+/** The steps the table takes by itself: dealing, the dealer's peek and the dealer's play. */
 const automatic = new Set(['deal', 'peek', 'deal-split', 'reveal', 'dealer-hit']);
+/** The player's moves, by their keys. */
+const keys: Record<string, string> = {
+  h: 'hit',
+  s: 'stand',
+  d: 'double',
+  p: 'split',
+  i: 'insurance',
+  n: 'decline-insurance',
+};
+const RANKS: Record<number, string> = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' },
+  NAMES: Record<number, string> = { 1: 'Ace', 11: 'Jack', 12: 'Queen', 13: 'King' },
+  SUITS = ['♦', '♥', '♠', '♣'],
+  SUIT_NAMES = ['diamonds', 'hearts', 'spades', 'clubs'],
+  RESULTS = { blackjack: 'Blackjack', win: 'Win', push: 'Push', lose: 'Lose', bust: 'Bust' };
 let session: RoundState | null = null,
   busy = false,
   ready = false,
-  asset = 'ETH';
+  asset = 'ETH',
+  // When the next card starts in, so that cards arriving together are still dealt one by one, never long after.
+  dealing = 0;
+const amount = (value: bigint) => `${HookedIn.formatAmount(value)} ${asset}`;
 const message = (value: string, error = false) => {
   $('status').textContent = value;
   $('status').dataset.error = String(error);
+  // On a short phone the line sits below the deal: a problem is brought into view.
+  if (error) $('status').scrollIntoView({ block: 'nearest' });
 };
-function cards(target: HTMLElement, values: readonly Card[], hidden = false) {
-  target.replaceChildren();
-  for (const card of values) {
-    const element = document.createElement('div');
-    element.className = `card${card.suit < 2 ? ' red' : ''}`;
-    const face = document.createElement('span'),
-      suit = document.createElement('span');
-    suit.className = 'suit';
-    face.textContent =
-      ({ 1: 'A', 11: 'J', 12: 'Q', 13: 'K' } as Record<number, string>)[card.face] ?? String(card.face);
-    suit.textContent = ['♦', '♥', '♠', '♣'][card.suit];
-    element.append(face, suit);
-    target.append(element);
+/** Show `hand` in `row`, keeping the cards already there so that only new ones are dealt in. `hole` adds the dealer's
+ * face-down card, which flips when it is turned up. */
+function showCards(row: HTMLElement, hand: readonly Card[], hole: boolean) {
+  const wanted = hand.map(card => `${card.face}:${card.suit}`);
+  if (hole) wanted.push('hole');
+  const shown = [...row.children] as HTMLElement[];
+  let kept = 0;
+  while (kept < shown.length && shown[kept]!.dataset.card === wanted[kept]) kept++;
+  const turned = shown[kept]?.dataset.card === 'hole';
+  for (const card of shown.slice(kept)) card.remove();
+  for (const key of wanted.slice(kept)) {
+    const card = document.createElement('div'),
+      [face, suit] = key.split(':').map(Number) as [number, number];
+    card.dataset.card = key;
+    card.className = key === 'hole' ? 'card back deal' : `card ${suit < 2 ? 'red ' : ''}${turned ? 'flip' : 'deal'}`;
+    if (key !== 'hole') {
+      card.dataset.suit = SUITS[suit];
+      card.setAttribute('role', 'img');
+      card.setAttribute('aria-label', `${NAMES[face] ?? face} of ${SUIT_NAMES[suit]}`);
+      card.append(RANKS[face] ?? String(face));
+    }
+    const now = performance.now(),
+      start = Math.min(Math.max(dealing, now), now + 450);
+    card.style.animationDelay = `${start - now}ms`;
+    dealing = start + 150;
+    row.append(card);
   }
-  if (hidden || values.length === 0) {
-    const back = document.createElement('div');
-    back.className = 'card card-back';
-    back.textContent = 'HookedIn';
-    target.append(back);
-  }
+}
+/** A finished round: its headline, whether it came out ahead, and by how much. */
+function verdict(state: RoundState, table: ReturnType<typeof blackjackTable>) {
+  const net = BigInt(state.cash) - BigInt(state.contributed),
+    results = handResults(table);
+  return {
+    tone: net > 0n ? 'win' : net < 0n ? 'lose' : 'push',
+    title: table.dealerBlackjack
+      ? 'Dealer blackjack'
+      : results.includes('blackjack')
+        ? 'Blackjack!'
+        : results.every(result => result === 'bust')
+          ? 'Bust'
+          : net > 0n
+            ? 'You win'
+            : net < 0n
+              ? 'Dealer wins'
+              : results.every(result => result === 'push')
+                ? 'Push'
+                : 'Break even',
+    amount: net > 0n ? `+${amount(net)}` : net < 0n ? `−${amount(-net)}` : 'Bet returned',
+  };
 }
 function render() {
   const active = Boolean(session && !session.terminal),
-    state = blackjackState(session?.nodeId ?? '');
-  const table = blackjackTable(session?.events ?? []),
-    actions = session?.actions ?? [];
+    actions = session?.actions ?? [],
+    paused = active && actions.some(action => automatic.has(action)),
+    state = active ? blackjackState(session!.nodeId) : undefined,
+    table = blackjackTable(session?.events ?? []),
+    results = session?.terminal ? handResults(table) : [];
   bank.setBusy(busy || !ready);
-  $<HTMLInputElement>('stake').disabled = busy || active;
-  $('deal').classList.toggle('hidden', active && !actions.some(a => automatic.has(a)));
-  $<HTMLButtonElement>('deal').disabled = busy || !ready;
-  $('deal').textContent = busy
-    ? 'Settling…'
-    : !ready
-      ? 'Connecting wallet…'
-      : active
-        ? 'Continue hand'
-        : 'Deal me in ↗';
-  for (const id of ['hit', 'stand', 'double', 'split', 'insurance', 'decline-insurance']) {
-    const button = $<HTMLButtonElement>(id),
-      cost = BigInt(session?.actionCosts[id] ?? 0);
-    button.classList.toggle('hidden', !active || !actions.includes(id));
-    const funded = session && BigInt(bank.balance.balance) >= BigInt(session.cash) + cost;
-    // The wallet is asked for any shortfall on click, so wallet funding needs no game reload.
-    button.disabled = busy || !ready;
-    button.title =
-      funded || !active
-        ? ''
-        : `Costs ${HookedIn.formatAmount(cost)} ${asset} more than this game has left; you will be asked to allow it.`;
-    if (id === 'insurance') button.textContent = `Insurance · ${HookedIn.formatAmount(cost)} ${asset}`;
+  for (const id of ['stake', 'half', 'twice']) $<HTMLInputElement>(id).disabled = busy || active;
+  for (const id of Object.values(keys)) $<HTMLButtonElement>(id).disabled = busy || !ready || !actions.includes(id);
+  $<HTMLButtonElement>('deal').disabled = busy || !ready || (active && !paused);
+  $('deal-label').textContent = busy ? 'Dealing' : !ready ? 'Connecting' : paused ? 'Continue' : 'Deal';
+  $('deal-label').classList.toggle('busy-label', busy);
+  showCards($('dealer-cards'), table.dealer, table.dealer.length === 1);
+  const dealer = cardHand(table.dealer);
+  $('dealer-total').textContent = table.dealer.length ? String(dealer.total) : '';
+  $('dealer-tag').textContent = table.dealerBlackjack ? 'Blackjack' : dealer.total > 21 ? 'Bust' : '';
+  $('insured').textContent = table.insured ? `Insurance ${table.dealerBlackjack ? 'won' : 'lost'}` : '';
+  for (const index of [0, 1]) {
+    const seat = $(`hand-${index}`),
+      cards = table.hands[index] ?? [],
+      hand = cardHand(cards),
+      // The hand in play shows both counts of a soft total.
+      playing = active && state?.completed.length === index,
+      result = results[index] ?? (hand.total > 21 ? 'bust' : '');
+    seat.classList.toggle('hidden', index > 0 && !table.split);
+    seat.classList.toggle('active', table.split && playing && state?.phase === 'player');
+    seat.dataset.result = result;
+    showCards(seat.querySelector('.cards')!, cards, false);
+    seat.querySelector('.total')!.textContent = !cards.length
+      ? ''
+      : playing && hand.soft && hand.total < 21
+        ? `${hand.total - 10}/${hand.total}`
+        : String(hand.total);
+    seat.querySelector('.tag')!.textContent =
+      `${result ? RESULTS[result] : ''} ${table.doubled[index] ? '×2' : ''}`.trim();
   }
-  cards($('dealer-cards'), table.dealer, table.dealer.length === 1);
-  const dealerTotal = table.dealer.length ? cardHand(table.dealer).total : 0;
-  $('dealer-total').textContent = dealerTotal > 21 ? `BUST (${dealerTotal})` : dealerTotal ? String(dealerTotal) : '—';
-  const hands = $('hands');
-  hands.replaceChildren();
-  for (const [index, hand] of table.hands.entries()) {
-    const panel = document.createElement('div');
-    panel.className = 'player-hand';
-    if (active && state?.phase === 'player' && state.completed.length === index) panel.classList.add('active');
-    const caption = document.createElement('div');
-    caption.className = 'hand-caption';
-    const total = hand.length ? cardHand(hand) : null;
-    const name = table.split ? `HAND ${index + 1}` : 'YOUR HAND';
-    caption.textContent = `${name} · ${total ? (total.total > 21 ? 'BUST' : `${total.soft ? 'SOFT ' : ''}${total.total}`) : '—'}`;
-    const row = document.createElement('div');
-    row.className = 'cards';
-    cards(row, hand);
-    const amount = document.createElement('div');
-    amount.className = 'hand-kind';
-    amount.textContent = session
-      ? `${HookedIn.formatAmount(BigInt(session.setup.stake) * (table.doubled[index] ? 2n : 1n))} ${asset}${table.doubled[index] ? ' · DOUBLED' : ''}`
-      : '';
-    if (session?.terminal && total) {
-      const natural = !table.split && hand.length === 2 && total.total === 21;
-      const result =
-        total.total > 21
-          ? 'Loss'
-          : table.dealerBlackjack
-            ? natural
-              ? 'Push'
-              : 'Loss'
-            : natural
-              ? 'Blackjack'
-              : dealerTotal > 21 || total.total > dealerTotal
-                ? 'Win'
-                : total.total === dealerTotal
-                  ? 'Push'
-                  : 'Loss';
-      amount.textContent += ` · ${result}`;
-    }
-    panel.append(caption, row, amount);
-    hands.append(panel);
-  }
-  $('cash-label').textContent = session?.terminal ? 'Net result' : 'Total wager';
-  $('cash').textContent = session
-    ? HookedIn.formatAmount(session.terminal ? BigInt(session.cash) - BigInt(session.contributed) : session.contributed)
-    : '—';
-  $('outcome').classList.toggle('hidden', !session?.terminal);
+  $('offer').classList.toggle('hidden', !actions.includes('insurance'));
+  $('offer-cost').textContent = amount(BigInt(session?.actionCosts.insurance ?? 0));
+  // The result comes in once the last card has.
+  if (session?.terminal && $('result').classList.contains('hidden'))
+    $('result').style.animationDelay = `${Math.max(dealing - performance.now(), 0) + 150}ms`;
+  $('result').classList.toggle('hidden', !session?.terminal);
   if (session?.terminal) {
-    const net = BigInt(session.cash) - BigInt(session.contributed);
-    const natural = !table.split && table.hands[0]!.length === 2 && cardHand(table.hands[0]!).total === 21;
-    $('outcome').textContent =
-      `${table.dealerBlackjack ? 'Dealer blackjack' : natural ? 'Blackjack' : net > 0n ? 'You win' : net === 0n ? 'Break even' : 'Net loss'} · ${HookedIn.formatAmount(session.cash)} ${asset} returned`;
+    const { tone, title, amount } = verdict(session, table);
+    $('result').dataset.tone = tone;
+    $('result-title').textContent = title;
+    $('result-amount').textContent = amount;
   }
-  $('insurance-note').textContent = table.insured
-    ? `Insurance ${table.dealerBlackjack ? 'wins' : active && state?.phase === 'insurance' ? 'pending' : 'loses'} · ${HookedIn.formatAmount(BigInt(session!.setup.stake) / 2n)} ${asset}`
-    : '';
-  document.querySelector('.table')!.classList.toggle('busy', busy);
+}
+function status() {
+  if (!session) return message('Set your bet and deal.');
+  const table = blackjackTable(session.events);
+  if (session.terminal) {
+    const { title, amount } = verdict(session, table);
+    message(`${title} · ${amount}`);
+  } else if (session.actions.includes('insurance')) message('The dealer shows an ace. Take insurance?');
+  else if (session.actions.some(action => automatic.has(action))) message('Continue to finish the hand.');
+  else {
+    const index = blackjackState(session.nodeId)!.completed.length;
+    message(
+      `Your move${table.split ? ` on hand ${index + 1}` : ''}: ${cardHand(table.hands[index]!).total} against the dealer's ${cardHand(table.dealer).total}.`,
+    );
+  }
 }
 async function finishAutomatic() {
   let moves = 0;
@@ -135,29 +162,19 @@ async function finishAutomatic() {
     render();
   }
 }
-function status() {
-  if (session?.terminal)
-    message(
-      `Hand settled. ${HookedIn.formatAmount(session.cash)} ${asset} returned from ${HookedIn.formatAmount(session.contributed)} ${asset} wagered.`,
-    );
-  else if (session?.actions.includes('insurance'))
-    message('Dealer shows an Ace. Insurance costs half your initial bet and pays 2:1 if the dealer has blackjack.');
-  else message('Your move. Choose hit, stand, double, or split when available.');
-}
 async function play(action?: string) {
   if (busy || !ready) return;
   busy = true;
+  message('');
   render();
-  message('Preparing your hand…');
   try {
     if (!session || session.terminal) {
-      const stake = HookedIn.parseAmount($<HTMLInputElement>('stake').value);
-      if (BigInt(stake) % 2n)
-        throw new Error('Stake must be an even number of wei for exact blackjack and insurance payouts.');
-      session = await round.start({ stake, rules: 'stake-originals-v1' });
+      const wei = HookedIn.parseAmount(stake.value);
+      if (BigInt(wei) % 2n) throw new Error('Your bet must be an even number of wei.');
+      session = await round.start({ stake: wei, rules: 'stake-originals-v1' });
+      render();
     } else if (action) session = await round.action(action);
     await finishAutomatic();
-    render();
     status();
   } catch (error: any) {
     try {
@@ -169,14 +186,34 @@ async function play(action?: string) {
     render();
   }
 }
-bank.onChange(() => render());
+/** Halve or double the bet, keeping it a positive, even number of wei. */
+function scale(up: boolean) {
+  try {
+    const wei = BigInt(HookedIn.parseAmount(stake.value)),
+      next = up ? wei * 2n : (wei / 4n) * 2n;
+    if (next) stake.value = HookedIn.exactAmount(next);
+  } catch {}
+}
 $('deal').addEventListener('click', () => play());
-for (const id of ['hit', 'stand', 'double', 'split', 'insurance', 'decline-insurance'])
-  $('' + id).addEventListener('click', () => play(id));
+for (const id of Object.values(keys)) $(id).addEventListener('click', () => play(id));
+$('half').addEventListener('click', () => scale(false));
+$('twice').addEventListener('click', () => scale(true));
+stake.addEventListener('keydown', event => event.key === 'Enter' && $('deal').click());
+document.addEventListener('keydown', event => {
+  const target = event.target as HTMLElement,
+    move = keys[event.key.toLowerCase()];
+  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || target instanceof HTMLInputElement) return;
+  if (move) $(move).click();
+  // A focused control answers Space itself.
+  else if (event.code === 'Space' && !target.closest('button, summary')) {
+    event.preventDefault();
+    $('deal').click();
+  }
+});
 async function recover() {
   try {
     const startup = await HookedIn.initializeGame({
-      stakeInput: $<HTMLInputElement>('stake'),
+      stakeInput: stake,
       assetLabels: document.querySelectorAll('[data-asset]'),
     });
     asset = startup.asset;
@@ -185,10 +222,9 @@ async function recover() {
     // player plays on.
     ready = true;
     session = await round.restore();
-    if (session) status();
-    else message('Set your stake and deal.');
-    if (session?.terminal && BigInt(session.balance) === 0n)
-      message('Your last hand was restored. Its value is already in your wallet; add funds to keep playing.');
+    // Deal repeats the last hand's bet.
+    if (session) stake.value = HookedIn.exactAmount(session.setup.stake);
+    status();
     round.watch(() => {
       if (busy) return;
       session = round.state();

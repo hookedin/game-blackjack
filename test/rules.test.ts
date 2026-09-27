@@ -5,7 +5,7 @@ import type { GameNode, Rational } from '@hookedin/play/sdk/engine';
 import { addCard, blackjackState, createBlackjack, dealerDistribution } from '../src/rules.ts';
 import { blackjackFunding } from '../src/funding.ts';
 import { admits, betReturn, RETURN_SCALE } from '@hookedin/play/sdk/admits';
-import { blackjackTable, cardHand } from '../src/view.ts';
+import { blackjackTable, cardHand, handResults } from '../src/view.ts';
 const ZERO = fraction(0n),
   ONE = fraction(1n),
   STAKE = 2n;
@@ -261,6 +261,31 @@ test('split is once only, permits doubling, and both hands use the same dealer',
   const pair = round().deal(8, 8, 6).act('split').act('deal-split', 8);
   assert(!decision(pair.id).actions.some(a => a.id === 'split'));
   assert(decision(round().deal(10, 13, 6).id).actions.some(a => a.id === 'split'));
+});
+
+test('the result the page shows for each hand is what the rules pay', () => {
+  // Half stakes each result returns per unit bet; insurance won returns three more.
+  const pays = { blackjack: 5n, win: 4n, push: 2n, lose: 0n, bust: 0n };
+  let seed = 7;
+  const pick = <T>(values: readonly T[]) => values[(seed = (seed * 48271) % 2147483647) % values.length]!;
+  for (let i = 0; i < 3000; i++) {
+    const r = round();
+    while (r.node.kind === 'decision') {
+      const action = pick(decision(r.id).actions),
+        card = /:(\d+):([0-3])$/.exec(pick(action.outcomes).label ?? '');
+      if (card) r.act(action.id, Number(card[1]), Number(card[2]));
+      else r.act(action.id);
+    }
+    const table = blackjackTable(r.events);
+    assert.equal(
+      handResults(table).reduce(
+        (paid, result, hand) => paid + pays[result] * (table.doubled[hand] ? 2n : 1n),
+        table.insured && table.dealerBlackjack ? 3n : 0n,
+      ),
+      (r.node as any).payout,
+      r.events.map(e => e.label ?? e.action).join(' '),
+    );
+  }
 });
 
 test('split aces get exactly one card, with ordinary 21 paying 1:1', () => {

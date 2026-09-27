@@ -3,184 +3,348 @@
   --panel: #24201d;
   --line: rgba(234, 210, 172, 0.13);
   --muted: #a69887;
-  background: #191715;
   --dark: #191715;
+  --win: #f5d27a;
+  --lose: #ff9187;
+  --card-w: 64px;
+  --card-h: 90px;
+  background: #191715;
 }
 .primary {
   color: #342718;
 }
+/* The table: the dealer at the top, the rules printed on the felt, the player's hands at the bottom. */
 .table {
-  min-height: 410px;
-  background: radial-gradient(ellipse at center, #26493b, #18372b 80%);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 18px 16px;
+  background: radial-gradient(ellipse at 50% 40%, #2a5242, #173628 78%);
   border-color: #8c9c6c30;
 }
-.table-ring {
-  position: absolute;
-  inset: 37px 22px 25px;
-  border: 1px solid #c7c89220;
-  border-radius: 30%;
-  pointer-events: none;
-}
-.table-layout {
-  position: relative;
+.seat {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
-  padding: 52px 20px 62px;
-  gap: 16px;
+  gap: 8px;
+  min-width: 0;
 }
-.table .stage-meta,
-.table .stage-badge {
-  color: #b4bf9d;
+.seats {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
-.hand-caption {
-  text-align: center;
+.seats .seat {
+  flex: 1 1 0;
+  max-width: 300px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+}
+.seats .seat.active {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: #ffffff0a;
+}
+.hand-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 25px;
+}
+.seat-name {
   color: #c9d4bd;
   font-size: 10px;
+  font-weight: 600;
   letter-spacing: 1.4px;
-  margin-bottom: 12px;
+  text-transform: uppercase;
 }
+.total {
+  min-width: 34px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #0b1812d9;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.tag {
+  padding: 4px 8px;
+  border: 1px solid #ffffff30;
+  border-radius: 999px;
+  color: #e0e4d3;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.total:empty,
+.tag:empty {
+  display: none;
+}
+[data-result='win'] .tag,
+[data-result='blackjack'] .tag {
+  color: #241c07;
+  background: var(--win);
+  border-color: var(--win);
+}
+[data-result='lose'] .tag,
+[data-result='bust'] .tag {
+  color: var(--lose);
+  border-color: color-mix(in srgb, var(--lose) 55%, transparent);
+}
+/* Cards overlap like a dealt hand, so the corner of each stays readable. */
 .cards {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 7px;
+  min-height: var(--card-h);
+  transition: filter 0.3s;
 }
 .card {
-  width: 54px;
-  height: 76px;
-  background: #eee9d9;
-  border-radius: 6px;
-  color: #272e22;
-  box-shadow: 0 4px 9px #0003;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  border: 1px solid #d6d2bd;
-  flex-shrink: 0;
-}
-.card > span:first-child {
+  position: relative;
+  flex: none;
+  width: var(--card-w);
+  height: var(--card-h);
+  padding: 5px 0 0 6px;
+  border-radius: 7px;
+  background: linear-gradient(160deg, #fbf8f0, #ebe4d2);
+  color: #1d2420;
+  box-shadow:
+    -3px 4px 10px #0006,
+    inset 0 0 0 1px #0000001f;
   font:
-    700 25px Georgia,
+    700 calc(var(--card-w) * 0.3) / 1 Georgia,
     serif;
 }
-.card .suit {
-  font-size: 19px;
+.card + .card {
+  margin-left: calc(var(--card-w) * -0.42);
+}
+.cards:has(> :nth-child(5)) .card + .card {
+  margin-left: calc(var(--card-w) * -0.62);
+}
+/* The suit under the rank, and a large one in the far corner. */
+.card:after {
+  content: attr(data-suit);
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72em;
+}
+.card:before {
+  content: attr(data-suit);
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  font-size: 1.55em;
 }
 .card.red {
-  color: #a33235;
+  color: #b3263a;
 }
-.card-back {
-  background: repeating-linear-gradient(45deg, #783e39, #783e39 3px, #713a35 3px, #713a35 5px);
-  color: #e8c8a5;
-  border: 3px solid #e4d7bc;
-  font:
-    14px Georgia,
-    serif;
+.card.back {
+  background: repeating-linear-gradient(45deg, #7b3f3a 0 4px, #6a332e 4px 8px);
+  box-shadow:
+    -3px 4px 10px #0006,
+    inset 0 0 0 3px #efe4cc;
 }
-.table-wordmark {
-  font:
-    24px Georgia,
-    serif;
-  letter-spacing: 4px;
-  color: #bac898;
-  opacity: 0.35;
+.card.deal {
+  animation: deal 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
 }
-.hands {
-  display: flex;
-  gap: 18px;
-  width: 100%;
-  justify-content: center;
+.card.flip {
+  animation: flip 0.3s ease-out backwards;
 }
-.player-hand {
-  padding: 12px;
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translate(48px, -36px) rotate(8deg);
+  }
+}
+@keyframes flip {
+  from {
+    transform: scaleX(0);
+  }
+}
+[data-result='lose'] .cards,
+[data-result='bust'] .cards {
+  filter: brightness(0.55) saturate(0.6);
+}
+[data-result='win'] .cards,
+[data-result='blackjack'] .cards {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--win) 55%, transparent));
+}
+/* The felt between the hands: its printed rules, and in their place the insurance offer or the result. */
+.felt {
   flex: 1;
-  max-width: 420px;
-  min-width: 0;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  min-height: 72px;
 }
-.player-hand.active {
-  border-color: #edca9c88;
-  background: #ffffff08;
+.felt > * {
+  grid-area: 1 / 1;
 }
-.hand-kind {
+.felt-rules {
+  margin: 0;
+  color: #d7e3c6;
+  opacity: 0.42;
   text-align: center;
-  color: #b4c1a6;
-  font-size: 10px;
-  margin-top: 10px;
+  text-transform: uppercase;
+  font:
+    600 13px/1 Georgia,
+    serif;
+  letter-spacing: 3px;
 }
-.table-outcome {
-  position: absolute;
-  bottom: 19px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #143023ee;
-  color: #eee2bc;
-  padding: 9px 16px;
-  border-radius: 20px;
-  font-size: 11px;
-  border: 1px solid #bdbe8533;
-  text-align: center;
-  width: max-content;
-  max-width: 90%;
+.felt-rules small {
+  display: block;
+  margin-top: 8px;
+  font:
+    600 9px/1.2 Inter,
+    ui-sans-serif,
+    sans-serif;
+  letter-spacing: 1.6px;
 }
-#insurance-note {
-  color: #edca9c;
-  font-size: 11px;
-  min-height: 12px;
+.felt:has(> .offer:not(.hidden), > .result:not(.hidden)) .felt-rules {
+  visibility: hidden;
 }
-.action-buttons {
+.offer,
+.result {
+  border-radius: 14px;
+  background: #0c1a13f2;
+  border: 1px solid #ffffff30;
+  box-shadow: 0 8px 24px #0006;
+}
+.offer {
   display: flex;
+  align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  grid-column: 1/-1;
-}
-.action-buttons button {
-  flex: 1;
-  padding: 0 14px;
+  padding: 7px 7px 7px 16px;
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  font-size: 13px;
   white-space: nowrap;
-  min-width: 100px;
 }
+.offer button {
+  height: 38px;
+  padding: 0 14px;
+}
+.result {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 10px 28px;
+  color: #ece8da;
+  animation: pop 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.3) backwards;
+}
+.result strong {
+  font-size: 22px;
+  letter-spacing: -0.4px;
+}
+.result span {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.result[data-tone='win'] {
+  color: var(--win);
+  border-color: var(--win);
+  box-shadow: 0 0 36px color-mix(in srgb, var(--win) 35%, transparent);
+}
+.result[data-tone='lose'] {
+  color: var(--lose);
+  border-color: color-mix(in srgb, var(--lose) 60%, transparent);
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+/* The bet with its quick changes, the moves, and the deal. */
 .controls {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.25fr 1fr;
 }
-.busy .card {
-  opacity: 0.8;
+.input-wrap {
+  padding-right: 7px;
+}
+.input-wrap label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+}
+.input-wrap .tool {
+  height: 34px;
+  padding: 0 11px;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.moves {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.moves button {
+  padding: 0 4px;
+  transition: opacity 0.15s;
+}
+kbd {
+  margin-left: 5px;
+  padding: 1px 5px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 9px;
+  opacity: 0.55;
+}
+@media (max-width: 600px), (hover: none) {
+  kbd {
+    display: none;
+  }
+}
+/* Narrower, the moves take a row of their own above the bet and the deal. */
+@media (max-width: 1000px) {
+  .controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .moves {
+    grid-column: 1 / -1;
+    order: -1;
+  }
 }
 @media (max-width: 600px) {
-  .table-layout {
-    padding: 54px 10px 62px;
+  :root {
+    --card-w: 48px;
+    --card-h: 67px;
   }
-  .hands {
-    gap: 4px;
+  .table {
+    padding: 10px;
+    gap: 6px;
   }
-  .player-hand {
-    padding: 8px 3px;
+  .seat {
+    gap: 6px;
   }
-  .card {
-    width: 43px;
-    height: 63px;
+  .seats .seat {
+    padding: 3px;
   }
-  .card > span:first-child {
-    font-size: 23px;
+  .felt {
+    min-height: 56px;
   }
-  .cards {
-    gap: 4px;
+  .felt-rules {
+    font-size: 11px;
+    letter-spacing: 2px;
   }
-  .hand-caption {
-    font-size: 9px;
-    letter-spacing: 0.5px;
-  }
-  .table .stage-meta {
-    font-size: 7px;
-  }
-  .stage-badge {
+  .felt-rules small {
+    margin-top: 6px;
     font-size: 8px;
+    letter-spacing: 1px;
   }
-  .table-ring {
-    inset: 40px 8px 24px;
+  .result {
+    padding: 6px 20px;
+  }
+  .result strong {
+    font-size: 19px;
+  }
+  .controls > * {
+    grid-column: 1 / -1;
   }
 }

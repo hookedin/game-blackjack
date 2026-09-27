@@ -1,0 +1,29 @@
+{
+  "name": "@hookedin/game-blackjack",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": "github:hookedin/game-blackjack",
+  "engines": {
+    "node": ">=24.4"
+  },
+  "scripts": {
+    "build": "hookedin-game build",
+    "dev": "hookedin-game serve",
+    "generate": "node --import tsx scripts/funding.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run typecheck && node --import tsx scripts/funding.ts --check && node --import tsx --test test/*.test.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@hookedin/play": "git+https://github.com/hookedin/play.git#main"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.5",
+    "prettier": "3.9.8",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2"
+  }
+}

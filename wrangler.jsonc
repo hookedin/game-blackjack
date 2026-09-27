@@ -1,0 +1,7 @@
+// Where `wrangler deploy` publishes dist/: a Cloudflare Worker that only serves static assets.
+{
+  "name": "hookedin-blackjack-game",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "dist" },
+  "routes": [{ "pattern": "blackjack-game.hookedin.com", "custom_domain": true }],
+}

@@ -7,7 +7,8 @@ this repository.
 
 ## How to play
 
-Add funds, set a stake and deal. The table rules follow Stake Originals Blackjack:
+With ETH, give the game money with **Add funds**; practice needs none. Set a stake and deal. The table rules follow
+Stake Originals Blackjack:
 
 | Rule            | Behaviour                                                                                                 |
 | --------------- | --------------------------------------------------------------------------------------------------------- |

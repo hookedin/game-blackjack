@@ -7,7 +7,7 @@ this repository.
 
 ## How to play
 
-With ETH, give the game money with **Add funds**; practice needs none. Set your bet, halve or double it with **½** and
+Give the game money from your balance with **Add funds**. Set your bet, halve or double it with **½** and
 **2×**, and deal; the bet stays for the next hand, so dealing again repeats it. On a keyboard, Space deals, H hits, S
 stands, D doubles, P splits, and I or N take or refuse insurance. The table rules follow Stake Originals Blackjack:
 

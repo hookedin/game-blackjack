@@ -7,7 +7,7 @@ this repository.
 
 ## How to play
 
-Give the game money from your balance with **Add funds**. Set your bet, halve or double it with **½** and
+Set what the game may spend from your wallet with **Adjust allowance**. Set your bet, halve or double it with **½** and
 **2×**, and deal; the bet stays for the next hand, so dealing again repeats it. On a keyboard, Space deals, H hits, S
 stands, D doubles, P splits, and I or N take or refuse insurance. The table rules follow Stake Originals Blackjack:
 
@@ -24,7 +24,7 @@ stands, D doubles, P splits, and I or N take or refuse insurance. The table rule
 | Surrender       | None                                                                                                      |
 
 The stake must be an even number of wei. Doubles, splits and insurance need enough additional money in the game
-balance; the game asks the wallet for more when they do not fit.
+allowance; the game asks the wallet for more when they do not fit.
 
 ## How it works
 

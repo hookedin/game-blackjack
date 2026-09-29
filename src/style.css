@@ -215,12 +215,21 @@
 }
 .offer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 7px 7px 7px 16px;
   border-color: color-mix(in srgb, var(--accent) 60%, transparent);
   font-size: 13px;
-  white-space: nowrap;
+}
+.offer,
+.result {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.offer > span {
+  min-width: 0;
 }
 .offer button {
   height: 38px;
@@ -262,17 +271,7 @@
 .controls {
   grid-template-columns: 1fr 1.25fr 1fr;
 }
-.input-wrap {
-  padding-right: 7px;
-}
-.input-wrap label {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 1.3px;
-  text-transform: uppercase;
-}
-.input-wrap .tool {
+.stake-heading .tool {
   height: 34px;
   padding: 0 11px;
   font-size: 13px;
@@ -340,6 +339,10 @@ kbd {
   }
   .result {
     padding: 6px 20px;
+  }
+  .offer > span {
+    flex-basis: 100%;
+    text-align: center;
   }
   .result strong {
     font-size: 19px;

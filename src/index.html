@@ -61,13 +61,16 @@
         </div>
       </section>
       <section class="controls" aria-label="Bet controls">
-        <div class="input-wrap">
-          <label for="stake">Bet</label
-          ><input id="stake" inputmode="decimal" value="0.000001" autocomplete="off" aria-label="Stake in ETH" /><span
-            data-asset
-            >ETH</span
-          ><button class="tool" id="half" type="button" aria-label="Halve the bet">½</button
-          ><button class="tool" id="twice" type="button" aria-label="Double the bet">2×</button>
+        <div class="field stake-field">
+          <div class="stake-heading">
+            <label for="stake">Bet</label>
+            <button class="tool" id="half" type="button" aria-label="Halve the bet">½</button>
+            <button class="tool" id="twice" type="button" aria-label="Double the bet">2×</button>
+          </div>
+          <div class="input-wrap">
+            <input id="stake" inputmode="decimal" value="0.000001" autocomplete="off" aria-label="Stake in ETH" />
+            <span data-asset>ETH</span>
+          </div>
         </div>
         <div class="moves" role="group" aria-label="Your move">
           <button class="secondary" id="hit" type="button" aria-keyshortcuts="H">

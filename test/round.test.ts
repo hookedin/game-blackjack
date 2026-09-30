@@ -1,28 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { gameWallet } from '@hookedin/play/testing/game-wallet.ts';
+import { bridgeTo, gameWallet, memoryStore } from '@hookedin/play/testing/game-wallet.ts';
 import { RoundClient } from '@hookedin/play/sdk/round';
-import type { RoundStore } from '@hookedin/play/sdk/round';
 import { createBlackjack } from '../src/rules.ts';
 import { blackjackFunding } from '../src/funding.ts';
-
-/** The game's own storage, as localStorage would keep it. */
-const memoryStore = (): RoundStore & { map: Map<string, string> } => {
-  const map = new Map<string, string>();
-  return {
-    map,
-    get: key => map.get(key) ?? null,
-    set: (key, value) => void map.set(key, value),
-    remove: key => void map.delete(key),
-  };
-};
 
 test('a hand plays through the real wallet on the funding table, and survives a reload mid-hand', async () => {
   const f = await gameWallet(),
     w = f.wallet;
   w.openGame(f.identity('blackjack'));
   await w.setGameLimit('1000000');
-  const bridge = f.bridgeFor(w),
+  const bridge = bridgeTo(w),
     store = memoryStore(),
     graph = (setup: any) => createBlackjack({ stake: BigInt(setup.stake) });
   let round = new RoundClient(bridge, graph, blackjackFunding, { store, name: 'blackjack' }),

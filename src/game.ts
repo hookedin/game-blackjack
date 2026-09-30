@@ -29,10 +29,9 @@ const RANKS: Record<number, string> = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K' },
 let session: RoundState | null = null,
   busy = false,
   ready = false,
-  asset = 'ETH',
   // When the next card starts in, so that cards arriving together are still dealt one by one, never long after.
   dealing = 0;
-const amount = (value: bigint) => `${HookedIn.formatAmount(value)} ${asset}`;
+const amount = (value: bigint) => `${HookedIn.formatAmount(value)} ETH`;
 const message = (value: string, error = false) => {
   $('status').textContent = value;
   $('status').dataset.error = String(error);
@@ -210,12 +209,7 @@ document.addEventListener('keydown', event => {
 });
 async function recover() {
   try {
-    const startup = await HookedIn.initializeGame({
-      stakeInput: stake,
-      assetLabels: document.querySelectorAll('[data-asset]'),
-    });
-    asset = startup.asset;
-    bank.update(startup.state);
+    bank.update((await HookedIn.initializeGame({ stakeInput: stake })).state);
     // Ready before the hand is restored: a hand this page cannot finish is let go with a word, and the
     // player plays on.
     ready = true;

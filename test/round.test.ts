@@ -9,7 +9,7 @@ test('a hand plays through the real wallet on the funding table, and survives a 
   const f = await gameWallet(),
     w = f.wallet;
   w.openGame(f.identity('blackjack'));
-  await w.setGameLimit('1000000');
+  await w.setGameAllowance('1000000');
   const bridge = bridgeTo(w),
     store = memoryStore(),
     graph = (setup: any) => createBlackjack({ stake: BigInt(setup.stake) });

@@ -1,14 +1,14 @@
 import { HookedIn } from '@hookedin/play/sdk/sdk';
 import { RoundClient } from '@hookedin/play/sdk/round';
 import type { RoundState } from '@hookedin/play/sdk/round';
-import { mountBank } from '@hookedin/play/sdk/bank';
+import { mountAllowance } from '@hookedin/play/sdk/allowance';
 import { blackjackState, createBlackjack } from './rules.ts';
 import { blackjackFunding } from './funding.ts';
 import { blackjackTable, cardHand, handResults } from './view.ts';
 import type { Card } from './view.ts';
 const round = new RoundClient(HookedIn, setup => createBlackjack({ stake: BigInt(setup.stake) }), blackjackFunding);
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-const bank = mountBank($('bank'), { round });
+const allowance = mountAllowance($('allowance'), { round });
 const stake = $<HTMLInputElement>('stake');
 /** The steps the table takes by itself: dealing, the dealer's peek and the dealer's play. */
 const automatic = new Set(['deal', 'peek', 'deal-split', 'reveal', 'dealer-hit']);
@@ -95,7 +95,7 @@ function render() {
     state = active ? blackjackState(session!.nodeId) : undefined,
     table = blackjackTable(session?.events ?? []),
     results = session?.terminal ? handResults(table) : [];
-  bank.setBusy(busy || !ready);
+  allowance.setBusy(busy || !ready);
   for (const id of ['stake', 'half', 'twice']) $<HTMLInputElement>(id).disabled = busy || active;
   for (const id of Object.values(keys)) $<HTMLButtonElement>(id).disabled = busy || !ready || !actions.includes(id);
   $<HTMLButtonElement>('deal').disabled = busy || !ready || (active && !paused);
@@ -209,7 +209,7 @@ document.addEventListener('keydown', event => {
 });
 async function recover() {
   try {
-    bank.update((await HookedIn.initializeGame({ stakeInput: stake })).state);
+    allowance.update((await HookedIn.initializeGame({ stakeInput: stake })).allowance);
     // Ready before the hand is restored: a hand this page cannot finish is let go with a word, and the
     // player plays on.
     ready = true;

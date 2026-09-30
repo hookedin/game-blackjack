@@ -1,15 +1,13 @@
 import type { RoundEvent } from '@hookedin/play/sdk/round';
 import { addCard } from './rules.ts';
+import type { CardRank } from './rules.ts';
 export interface Card {
   face: number;
   suit: number;
 }
-export type HandResult = 'blackjack' | 'win' | 'push' | 'lose' | 'bust';
+type HandResult = 'blackjack' | 'win' | 'push' | 'lose' | 'bust';
 export function cardHand(cards: readonly Card[]) {
-  return cards.reduce(
-    (hand, card) => addCard(hand, Math.min(card.face, 10) as 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10),
-    { total: 0, soft: false },
-  );
+  return cards.reduce((hand, card) => addCard(hand, Math.min(card.face, 10) as CardRank), { total: 0, soft: false });
 }
 /** Replay only resolved, persisted card labels. No fresh display randomness. */
 export function blackjackTable(events: readonly RoundEvent[]) {

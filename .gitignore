@@ -6,3 +6,4 @@ dist/
 .env.*
 .wrangler/
 .dev.vars
+src/funding.ts

@@ -9,11 +9,11 @@
     "node": ">=24.4"
   },
   "scripts": {
-    "build": "hookedin-game build",
-    "dev": "hookedin-game serve",
+    "build": "npm run generate && hookedin-game build",
+    "dev": "npm run generate && hookedin-game serve",
     "generate": "node --import tsx scripts/funding.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run typecheck && node --import tsx scripts/funding.ts --check && node --import tsx --test test/*.test.ts",
+    "test": "npm run generate && npm run typecheck && node --import tsx --test test/*.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

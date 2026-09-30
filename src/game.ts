@@ -155,9 +155,7 @@ function status() {
   }
 }
 async function finishAutomatic() {
-  let moves = 0;
   while (session && !session.terminal && session.actions.length === 1 && automatic.has(session.actions[0]!)) {
-    if (++moves > 64) throw new Error('Unexpected deal sequence. Reconnect the game.');
     session = await round.action(session.actions[0]!);
     render();
   }
@@ -171,7 +169,7 @@ async function play(action?: string) {
     if (!session || session.terminal) {
       const wei = HookedIn.parseAmount(stake.value);
       if (BigInt(wei) % 2n) throw new Error('Your bet must be an even number of wei.');
-      session = await round.start({ stake: wei, rules: 'stake-originals-v1' });
+      session = await round.start({ stake: wei });
       render();
     } else if (action) session = await round.action(action);
     await finishAutomatic();

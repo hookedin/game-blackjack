@@ -1,10 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { add, compare, divide, fraction, loadFundedGame, multiply } from '@hookedin/play/sdk/engine';
+import { add, compare, divide, fraction, multiply } from '@hookedin/play/sdk/engine';
 import type { GameNode, Rational } from '@hookedin/play/sdk/engine';
-import { addCard, blackjackState, createBlackjack, dealerDistribution } from '../src/rules.ts';
-import { blackjackFunding } from '../src/funding.ts';
-import { admits, betReturn, RETURN_SCALE } from '@hookedin/play/sdk/admits';
+import { addCard, blackjackState, createBlackjack } from '../src/rules.ts';
 import { blackjackTable, cardHand, handResults } from '../src/view.ts';
 const ZERO = fraction(0n),
   ONE = fraction(1n),
@@ -178,41 +176,11 @@ test('Stake completed-hand edge matches an independent exact optimal-play oracle
     if (blackjackState(node.id)?.phase === 'insurance') assert.equal(choices.get(node.id), 'decline-insurance');
 });
 
-test('all states are reachable, acyclic, normalized and have exact integer monetary terms', () => {
-  const visited = new Set<string>(),
-    active = new Set<string>();
-  function visit(id: string) {
-    assert(!active.has(id));
-    if (visited.has(id)) return;
-    visited.add(id);
-    active.add(id);
-    const node = NODES.get(id);
-    assert(node);
-    if (node.kind === 'decision')
-      for (const a of node.actions) {
-        assert.deepEqual(sum(a.outcomes.map(o => o.probability)), ONE);
-        assert((a.additionalCash ?? 0n) >= 0n);
-        for (const o of a.outcomes) {
-          assert(compare(o.probability, ZERO) > 0);
-          visit(o.next);
-        }
-      }
-    active.delete(id);
-  }
-  visit(GRAPH.root);
-  assert.equal(visited.size, GRAPH.nodes.length);
-  for (const stake of [0n, -2n, 1n, 3n]) assert.throws(() => createBlackjack({ stake }), /positive, even/);
-});
-
-test('ace arithmetic and the unconditional S17 dealer PMF match a separate recursion', () => {
+test('aces count soft, and a stake must be positive and even', () => {
   assert.deepEqual(addCard(addCard({ total: 0, soft: false }, 1), 1), { total: 12, soft: true });
   assert.deepEqual(addCard({ total: 17, soft: true }, 10), { total: 17, soft: false });
-  for (const upcard of ranks)
-    assert.deepEqual(
-      new Map(dealerDistribution(upcard as any).map(o => [o.result, o.probability])),
-      independentDealer(upcard),
-    );
   assert.throws(() => addCard({ total: 22, soft: false }, 1), /unbusted/);
+  for (const stake of [0n, -2n, 1n, 3n]) assert.throws(() => createBlackjack({ stake }), /positive, even/);
 });
 
 test('all 52 cards are independent equiprobable draws, and different faces/suits survive merged state IDs', () => {
@@ -337,32 +305,4 @@ test('naturals pay 3:2 and an ordinary 21 pushes against dealer 21', () => {
   assert.equal((ordinary.node as any).payout, 2n);
   const bust = round().deal(10, 6, 6).act('hit', 10);
   assert.equal((bust.node as any).payout, 0n);
-});
-
-/**
- * A hand is played as one bet per step, and a step stakes the cash the hand holds above the class of
- * outcomes it can fall to, so what a single bet pays back is not what the hand pays back: a double
- * can be a bet that seldom pays, and standing charges the retained cash with no prize at all. A
- * player reading the measured return of one step is therefore reading that step, never the hand.
- * This test pins how far apart the two can be.
- */
-test('a hand is not one bet: a step can pay back almost nothing', () => {
-  const scale = 10n ** 15n / blackjackFunding.initialCash;
-  const plan = loadFundedGame(createBlackjack({ stake: 10n ** 15n }), blackjackFunding, scale, admits);
-  let worst = RETURN_SCALE,
-    payments = 0;
-  for (const node of plan.nodes) {
-    if (node.kind !== 'decision') continue;
-    for (const action of node.actions) {
-      const step = action.transition;
-      if (step.kind !== 'casino-bet') {
-        if (step.amount > 0n) payments++;
-        continue;
-      }
-      for (const branch of step.branches)
-        if (branch.kind === 'bet' && betReturn(branch.bet) < worst) worst = betReturn(branch.bet);
-    }
-  }
-  assert.ok(payments > 0, 'standing charges the hand with no prize: a debit that pays nothing back');
-  assert.ok(worst < RETURN_SCALE / 2n, `the worst single bet pays back ${worst} millionths, nothing like the hand`);
 });

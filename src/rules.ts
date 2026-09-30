@@ -1,21 +1,21 @@
-import { add, fraction, multiply } from '@hookedin/play/sdk/engine';
+import { add, fraction } from '@hookedin/play/sdk/engine';
 import type { GameAction, GameGraph, GameNode, GameOutcome, Rational } from '@hookedin/play/sdk/engine';
 
 /** 1 denotes an ace; 10 aggregates ten, jack, queen, and king. */
 export type CardRank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
-export interface BlackjackHand {
+interface BlackjackHand {
   /** Best total, with at most one ace counted as eleven. */
   readonly total: number;
   readonly soft: boolean;
 }
 
-export interface BlackjackResult {
+interface BlackjackResult {
   /** 16 groups all standing totals below 17; 22 is bust; 23 is a natural. */
   readonly total: number;
   readonly multiplier: 1 | 2;
 }
-export interface BlackjackState extends BlackjackHand {
+interface BlackjackState extends BlackjackHand {
   readonly phase: 'first' | 'second' | 'upcard' | 'insurance' | 'peek' | 'player' | 'split-deal' | 'hole' | 'dealer';
   readonly dealerUpcard: CardRank | 0;
   readonly pair: CardRank | 0;
@@ -26,16 +26,7 @@ export interface BlackjackState extends BlackjackHand {
   readonly multiplier: 1 | 2;
 }
 
-export type DealerResult = 'natural' | 'bust' | 17 | 18 | 19 | 20 | 21;
-
-export interface DealerOutcome {
-  readonly result: DealerResult;
-  readonly probability: Rational;
-}
-
-const RANKS: readonly CardRank[] = Object.freeze([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 const EMPTY: BlackjackHand = Object.freeze({ total: 0, soft: false });
-const ZERO = fraction(0n);
 const ONE = fraction(1n);
 
 function assertRank(rank: number): asserts rank is CardRank {
@@ -44,7 +35,7 @@ function assertRank(rank: number): asserts rank is CardRank {
   }
 }
 
-export function cardProbability(rank: CardRank): Rational {
+function cardProbability(rank: CardRank): Rational {
   assertRank(rank);
   return fraction(rank === 10 ? 4n : 1n, 13n);
 }
@@ -71,64 +62,6 @@ export function addCard(hand: BlackjackHand, rank: CardRank): BlackjackHand {
   return Object.freeze({ total, soft });
 }
 
-/** Natural is intentionally separate from an ordinary, multi-card 21. */
-function isNatural(first: CardRank, second: CardRank): boolean {
-  return (first === 1 && second === 10) || (first === 10 && second === 1);
-}
-
-function addMass<K>(map: Map<K, Rational>, key: K, probability: Rational): void {
-  map.set(key, add(map.get(key) ?? ZERO, probability));
-}
-
-const dealerMemo = new Map<string, readonly DealerOutcome[]>();
-const dealerUpcardMemo = new Map<CardRank, readonly DealerOutcome[]>();
-
-/** Dealer continuation after its first two cards; no later 21 is a natural. */
-function finishDealer(hand: BlackjackHand): readonly DealerOutcome[] {
-  if (hand.total > 21) return Object.freeze([{ result: 'bust', probability: ONE }]);
-  if (hand.total >= 17) {
-    return Object.freeze([{ result: hand.total as 17 | 18 | 19 | 20 | 21, probability: ONE }]);
-  }
-  const key = `${hand.total}:${hand.soft ? 's' : 'h'}`;
-  const cached = dealerMemo.get(key);
-  if (cached !== undefined) return cached;
-  const mass = new Map<DealerResult, Rational>();
-  for (const rank of RANKS) {
-    for (const outcome of finishDealer(addCard(hand, rank))) {
-      addMass(mass, outcome.result, multiply(cardProbability(rank), outcome.probability));
-    }
-  }
-  const outcomes = Object.freeze([...mass].map(([result, probability]) => Object.freeze({ result, probability })));
-  dealerMemo.set(key, outcomes);
-  return outcomes;
-}
-
-/**
- * Exact S17 dealer distribution, including its two-card natural separately.
- * Unconditional reference distribution. The game below checks for blackjack
- * before player decisions and conditions its later hole-card draw on no natural.
- */
-export function dealerDistribution(upcard: CardRank): readonly DealerOutcome[] {
-  assertRank(upcard);
-  const cached = dealerUpcardMemo.get(upcard);
-  if (cached !== undefined) return cached;
-  const first = addCard(EMPTY, upcard);
-  const mass = new Map<DealerResult, Rational>();
-  for (const rank of RANKS) {
-    const probability = cardProbability(rank);
-    if (isNatural(upcard, rank)) {
-      addMass(mass, 'natural', probability);
-    } else {
-      for (const outcome of finishDealer(addCard(first, rank))) {
-        addMass(mass, outcome.result, multiply(probability, outcome.probability));
-      }
-    }
-  }
-  const outcomes = Object.freeze([...mass].map(([result, probability]) => Object.freeze({ result, probability })));
-  dealerUpcardMemo.set(upcard, outcomes);
-  return outcomes;
-}
-
 const INITIAL: BlackjackState = Object.freeze({
   phase: 'first',
   total: 0,
@@ -145,7 +78,7 @@ const FACES = Object.freeze(Array.from({ length: 13 }, (_, i) => i + 1));
 const rankOf = (face: number): CardRank => Math.min(face, 10) as CardRank;
 
 function stateId(s: BlackjackState): string {
-  return `blackjack:v1:${[
+  return `blackjack:${[
     s.phase,
     s.total,
     +s.soft,
@@ -162,7 +95,7 @@ function stateId(s: BlackjackState): string {
 /** Public information only: the hole card is sampled conditionally after play. */
 export function blackjackState(id: string): BlackjackState | undefined {
   const match =
-    /^blackjack:v1:(first|second|upcard|insurance|peek|player|split-deal|hole|dealer):(\d+):([01]):(\d+):(\d+):([01]):([01]):(\d+):(-|\d+x[12](?:,\d+x[12])?):([12])$/.exec(
+    /^blackjack:(first|second|upcard|insurance|peek|player|split-deal|hole|dealer):(\d+):([01]):(\d+):(\d+):([01]):([01]):(\d+):(-|\d+x[12](?:,\d+x[12])?):([12])$/.exec(
       id,
     );
   if (!match) return undefined;
@@ -188,8 +121,7 @@ export function blackjackState(id: string): BlackjackState | undefined {
 }
 
 /**
- * Stake Originals rules checked in the live Game Info panel, 2026-09-17:
- * infinite deck, S17, peek, 3:2 naturals, double any first two (including split),
+ * Stake Originals rules: infinite deck, S17, peek, 3:2 naturals, double any first two (including split),
  * split once, one card to split aces, no surrender, half-stake 2:1 insurance.
  * Additional bets are player contributions, never free increases in the prize.
  * Both split hands settle against ONE dealer. Face labels retain individual

@@ -34,12 +34,12 @@ card. The game SDK's `RoundClient` plays the hand on it. The SDK's engine works 
 every state a cash value, the least money that finances each action from it as bets the casino admits, and each step
 becomes nothing, a payment to the bankroll, or one casino bet between a lower and a higher class of successors, drawn
 by the page with its own randomness so that every class is reached exactly as often as the rules say. See
-[sequential games built from casino bets](https://hookedin.com/docs/games/sequential-games/).
+[pricing and collapsing](https://hookedin.com/docs/games/collapsing-bets/).
 
-Pricing the whole graph takes time, so the page hands `RoundClient` a precomputed table, [src/funding.ts](src/funding.ts):
-each action's required cash at a 1,000,000-wei stake and a planning bankroll of 256 stakes. It applies when the stake is
-a multiple of 1,000,000 wei and the bankroll covers 672 stakes; any other stake is priced in the page. `npm run generate`
-writes the table from the rules, and `npm test` fails if it does not match them.
+Pricing the whole graph takes time, so the page hands `RoundClient` a table the build writes to `src/funding.ts` with
+[scripts/funding.ts](scripts/funding.ts): each action's required cash at a 1,000,000-wei stake and a planning bankroll of
+256 stakes. It applies when the stake is a multiple of 1,000,000 wei and the bankroll covers 672 stakes; any other stake
+is priced in the page.
 
 With optimal play through a completed hand the house edge is exactly
 `40248916821673328324125295 / 7056410014866816666030739693`, 0.5703880122736% of the initial bet.
@@ -65,8 +65,8 @@ npm run dev
 This serves the game at `http://127.0.0.1:4185/`, building it again on every page load. Open the wallet at
 [play.hookedin.com](https://play.hookedin.com), choose **Open a game by its URL** under the games and paste that address.
 
-`npm test` type-checks, checks the funding table and runs the tests. `npm run build` writes `dist/`, plain static files
-with the page, `game.js` and `icon.svg`.
+`npm test` type-checks and runs the tests. `npm run build` writes `dist/`, plain static files with the page, `game.js`
+and `icon.svg`.
 
 ## Deploy
 

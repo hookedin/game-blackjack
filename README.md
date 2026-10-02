@@ -7,7 +7,7 @@ this repository.
 
 ## How to play
 
-Set what the game may spend from your wallet with **Adjust allowance**. Set your bet, halve or double it with **½** and
+Set what the game may spend from your wallet with **Allowance** in the wallet's top bar. Set your bet, halve or double it with **½** and
 **2×**, and deal; the bet stays for the next hand, so dealing again repeats it. On a keyboard, Space deals, H hits, S
 stands, D doubles, P splits, and I or N take or refuse insurance. The table rules follow Stake Originals Blackjack:
 

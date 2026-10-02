@@ -1,14 +1,12 @@
 import { HookedIn } from '@hookedin/play/sdk/sdk';
 import { RoundClient } from '@hookedin/play/sdk/round';
 import type { RoundState } from '@hookedin/play/sdk/round';
-import { mountAllowance } from '@hookedin/play/sdk/allowance';
 import { blackjackState, createBlackjack } from './rules.ts';
 import { blackjackFunding } from './funding.ts';
 import { blackjackTable, cardHand, handResults } from './view.ts';
 import type { Card } from './view.ts';
 const round = new RoundClient(HookedIn, setup => createBlackjack({ stake: BigInt(setup.stake) }), blackjackFunding);
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
-const allowance = mountAllowance($('allowance'), { round });
 const stake = $<HTMLInputElement>('stake');
 /** The steps the table takes by itself: dealing, the dealer's peek and the dealer's play. */
 const automatic = new Set(['deal', 'peek', 'deal-split', 'reveal', 'dealer-hit']);
@@ -95,7 +93,6 @@ function render() {
     state = active ? blackjackState(session!.nodeId) : undefined,
     table = blackjackTable(session?.events ?? []),
     results = session?.terminal ? handResults(table) : [];
-  allowance.setBusy(busy || !ready);
   for (const id of ['stake', 'half', 'twice']) $<HTMLInputElement>(id).disabled = busy || active;
   for (const id of Object.values(keys)) $<HTMLButtonElement>(id).disabled = busy || !ready || !actions.includes(id);
   $<HTMLButtonElement>('deal').disabled = busy || !ready || (active && !paused);
@@ -173,6 +170,11 @@ async function play(action?: string) {
     } else if (action) session = await round.action(action);
     await finishAutomatic();
     status();
+    // The hand's winnings join the allowance the wallet shows once its last card is on the table.
+    if (session.terminal) {
+      const hand = session.id;
+      setTimeout(() => void HookedIn.end(hand).catch(() => {}), Math.max(dealing - performance.now(), 0) + 150);
+    }
   } catch (error: any) {
     try {
       session = await round.restore();
@@ -209,7 +211,7 @@ document.addEventListener('keydown', event => {
 });
 async function recover() {
   try {
-    allowance.update((await HookedIn.initializeGame({ stakeInput: stake })).allowance);
+    await HookedIn.initializeGame({ stakeInput: stake });
     // Ready before the hand is restored: a hand this page cannot finish is let go with a word, and the
     // player plays on.
     ready = true;

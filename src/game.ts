@@ -29,7 +29,7 @@ let session: RoundState | null = null,
   ready = false,
   // When the next card starts in, so that cards arriving together are still dealt one by one, never long after.
   dealing = 0;
-const amount = (value: bigint) => `${HookedIn.formatAmount(value)} ETH`;
+const amount = (value: bigint) => `${HookedIn.formatAmount(value)} µETH`;
 const message = (value: string, error = false) => {
   $('status').textContent = value;
   $('status').dataset.error = String(error);

@@ -29,7 +29,7 @@ let session: RoundState | null = null,
   ready = false,
   // When the next card starts in, so that cards arriving together are still dealt one by one, never long after.
   dealing = 0;
-const amount = (value: bigint) => `${HookedIn.formatAmount(value)} µETH`;
+const amount = (value: bigint) => `${HookedIn.formatAmount(value)} METH`;
 const message = (value: string, error = false) => {
   $('status').textContent = value;
   $('status').dataset.error = String(error);
@@ -164,7 +164,7 @@ async function play(action?: string) {
   try {
     if (!session || session.terminal) {
       const wei = HookedIn.parseAmount(stake.value);
-      if (HookedIn.wholeStake(wei, 2n) !== BigInt(wei)) throw new Error('Your bet must be an even number of µETH.');
+      if (HookedIn.wholeStake(wei, 2n) !== BigInt(wei)) throw new Error('Your bet must be an even number of METH.');
       session = await round.start({ stake: wei });
       render();
     } else if (action) session = await round.action(action);
@@ -185,7 +185,7 @@ async function play(action?: string) {
     render();
   }
 }
-/** Halve or double the bet, keeping it a positive, even number of µETH. */
+/** Halve or double the bet, keeping it a positive, even number of METH. */
 function scale(up: boolean) {
   try {
     const wei = BigInt(HookedIn.parseAmount(stake.value));
@@ -211,7 +211,7 @@ document.addEventListener('keydown', event => {
 async function recover() {
   try {
     await HookedIn.initializeGame({ stakeInput: stake });
-    // A bet is an even number of µETH, so its half-stake insurance is whole µETH too.
+    // A bet is an even number of METH, so its half-stake insurance is whole METH too.
     try {
       stake.value = HookedIn.exactAmount(HookedIn.wholeStake(HookedIn.parseAmount(stake.value), 2n));
     } catch {}

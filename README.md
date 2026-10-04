@@ -23,7 +23,7 @@ stands, D doubles, P splits, and I or N take or refuse insurance. The table rule
 | Insurance       | Offered against an Ace. Costs half the bet, pays 2:1                                                      |
 | Surrender       | None                                                                                                      |
 
-The stake must be an even number of µETH, so that half-stake insurance is whole µETH too. Doubles, splits and insurance
+The stake must be an even number of METH, so that half-stake insurance is whole METH too. Doubles, splits and insurance
 need enough additional money in the game allowance; the game asks the wallet for more when they do not fit.
 
 ## How it works

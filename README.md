@@ -7,10 +7,9 @@ this repository.
 
 ## How to play
 
-Set what the game may spend from your wallet in the wallet's dialog as the game opens, or with **Set allowance** in the
-wallet's top bar. Set your bet, halve or double it with **½** and **2×**, and deal; the bet stays for the next hand, so
-dealing again repeats it. On a keyboard, Space deals, H hits, S stands, D doubles, P splits, and I or N take or refuse
-insurance. The table rules follow Stake Originals Blackjack:
+Set what the game may spend from your wallet with **Set allowance** in the wallet's top bar. Set your bet, halve or
+double it with **½** and **2×**, and deal; the bet stays for the next hand, so dealing again repeats it. On a keyboard,
+Space deals, H hits, S stands, D doubles, P splits, and I or N take or refuse insurance. The table rules follow Stake Originals Blackjack:
 
 | Rule            | Behaviour                                                                                                 |
 | --------------- | --------------------------------------------------------------------------------------------------------- |
@@ -25,7 +24,8 @@ insurance. The table rules follow Stake Originals Blackjack:
 | Surrender       | None                                                                                                      |
 
 The stake must be an even number of METH, so that half-stake insurance is whole METH too. Doubles, splits and insurance
-need enough additional money in the game allowance; the game asks the wallet for more when they do not fit.
+need enough additional money in the game allowance; the game says so when they do not fit, and you raise it in the top
+bar.
 
 ## How it works
 

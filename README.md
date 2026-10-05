@@ -56,7 +56,7 @@ The cards on screen are replayed from the labels of settled steps, so a reload m
 
 ## Run it
 
-You need Node 24.4 or later.
+You need Node 26 or later.
 
 ```sh
 npm install

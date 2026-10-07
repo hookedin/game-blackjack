@@ -170,10 +170,11 @@ async function play(action?: string) {
     } else if (action) session = await round.action(action);
     await finishAutomatic();
     status();
-    // The hand's winnings join the allowance the wallet shows once its last card is on the table.
+    // The hand's winnings join the allowance the wallet shows once its last card is on the table, and the hand, with
+    // its cards, the player's history.
     if (session.terminal) {
-      const hand = session.id;
-      setTimeout(() => void HookedIn.end(hand).catch(() => {}), Math.max(dealing - performance.now(), 0) + 150);
+      const hand = session;
+      setTimeout(() => void round.end(hand).catch(() => {}), Math.max(dealing - performance.now(), 0) + 150);
     }
   } catch (error: any) {
     try {

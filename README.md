@@ -23,9 +23,8 @@ Space deals, H hits, S stands, D doubles, P splits, and I or N take or refuse in
 | Insurance       | Offered against an Ace. Costs half the bet, pays 2:1                                                      |
 | Surrender       | None                                                                                                      |
 
-The stake must be an even number of METH, so that half-stake insurance is whole METH too. Doubles, splits and insurance
-need enough additional money in the game allowance; the game says so when they do not fit, and you raise it in the top
-bar.
+Doubles, splits and insurance need enough additional money in the game allowance; the game says so when they do not
+fit, and you raise it in the top bar.
 
 ## How it works
 

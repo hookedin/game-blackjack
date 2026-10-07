@@ -163,9 +163,7 @@ async function play(action?: string) {
   render();
   try {
     if (!session || session.terminal) {
-      const wei = HookedIn.parseAmount(stake.value);
-      if (HookedIn.wholeStake(wei, 2n) !== BigInt(wei)) throw new Error('Your bet must be an even number of METH.');
-      session = await round.start({ stake: wei });
+      session = await round.start({ stake: HookedIn.parseAmount(stake.value) });
       render();
     } else if (action) session = await round.action(action);
     await finishAutomatic();
@@ -186,11 +184,11 @@ async function play(action?: string) {
     render();
   }
 }
-/** Halve or double the bet, keeping it a positive, even number of METH. */
+/** Halve or double the bet, keeping it a positive, whole number of METH. */
 function scale(up: boolean) {
   try {
     const wei = BigInt(HookedIn.parseAmount(stake.value));
-    stake.value = HookedIn.exactAmount(up ? wei * 2n : HookedIn.wholeStake(wei / 2n, 2n));
+    stake.value = HookedIn.exactAmount(up ? wei * 2n : HookedIn.wholeStake(wei / 2n));
   } catch {}
 }
 $('deal').addEventListener('click', () => play());
@@ -212,10 +210,6 @@ document.addEventListener('keydown', event => {
 async function recover() {
   try {
     await HookedIn.initializeGame({ stakeInput: stake });
-    // A bet is an even number of METH, so its half-stake insurance is whole METH too.
-    try {
-      stake.value = HookedIn.exactAmount(HookedIn.wholeStake(HookedIn.parseAmount(stake.value), 2n));
-    } catch {}
     // Ready before the hand is restored: a hand this page cannot finish is let go with a word, and the
     // player plays on.
     ready = true;

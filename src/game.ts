@@ -223,5 +223,9 @@ async function recover() {
     render();
   }
 }
+// A refusal for want of allowance goes once the player changes the allowance in the top bar.
+HookedIn.onAllowance(() => {
+  if ($('status').textContent === HookedIn.NOT_ENOUGH_ALLOWANCE) status();
+});
 render();
 void recover();

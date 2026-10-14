@@ -217,15 +217,18 @@ async function recover() {
     // Deal repeats the last hand's bet.
     if (session) stake.value = HookedIn.exactAmount(session.setup.stake);
     status();
+    if (!session && !(await HookedIn.allowance()).allowance) message(HookedIn.NO_ALLOWANCE);
   } catch (error: any) {
     message(error.message, true);
   } finally {
     render();
   }
 }
-// A refusal for want of allowance goes once the player changes the allowance in the top bar.
-HookedIn.onAllowance(() => {
-  if ($('status').textContent === HookedIn.NOT_ENOUGH_ALLOWANCE) status();
+// The game opens saying to set an allowance in the top bar: that word, or a refusal for want of allowance, goes once
+// the player sets one.
+HookedIn.onAllowance(({ allowance }) => {
+  const shown = $('status').textContent;
+  if (allowance && (shown === HookedIn.NO_ALLOWANCE || shown === HookedIn.NOT_ENOUGH_ALLOWANCE)) status();
 });
 render();
 void recover();

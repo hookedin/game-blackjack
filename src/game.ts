@@ -5,7 +5,9 @@ import { blackjackState, createBlackjack } from './rules.ts';
 import { blackjackFunding } from './funding.ts';
 import { blackjackTable, cardHand, handResults } from './view.ts';
 import type { Card } from './view.ts';
-const round = new RoundClient(HookedIn, setup => createBlackjack({ stake: setup.stake }), blackjackFunding);
+const round = new RoundClient(HookedIn, setup => createBlackjack({ stake: setup.stake }), {
+  funding: blackjackFunding,
+});
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const stake = $<HTMLInputElement>('stake');
 /** The steps the table takes by itself: dealing, the dealer's peek and the dealer's play. */

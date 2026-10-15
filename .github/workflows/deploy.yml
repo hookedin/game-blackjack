@@ -67,7 +67,7 @@ jobs:
           git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
             commit -m "Update play to $play" -- package-lock.json
           git push origin HEAD:main
-      - run: npm run build
+      # wrangler.jsonc builds the page first.
       - name: Publish to Cloudflare
         if: env.PUBLISH == 'true'
         env:

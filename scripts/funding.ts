@@ -1,12 +1,10 @@
 /** Writes src/funding.ts, the price of every action at a 1,000,000-wei stake, so the page need not price the game. */
 import fs from 'node:fs/promises';
 import { compileGame } from '@hookedin/play/sdk/engine';
-import { admits } from '@hookedin/play/sdk/admits';
 import { createBlackjack } from '../src/rules.ts';
 
 const stake = 1_000_000n;
 const plan = compileGame(createBlackjack({ stake }), {
-  admits,
   bankrollFloor: 256n * stake,
   cashQuantum: 1n,
   initialCash: stake,
@@ -14,8 +12,8 @@ const plan = compileGame(createBlackjack({ stake }), {
 const rows = plan.nodes
   .filter(node => node.kind === 'decision')
   .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-const source = `// Written by npm run generate.
-// Prices scale exactly for stakes divisible by ${stake} wei; ordinary compilation handles other stakes.
+const source = `// Written by npm run generate: every action's price at a stake of ${stake} wei. RoundClient scales it to a stake
+// that is a multiple of that while the virtual bankroll covers ${plan.conservativeBankroll / stake} stakes, and prices any other round itself.
 import type { FundingTable } from '@hookedin/play/sdk/engine';
 export const blackjackFunding: FundingTable = {
   bankrollFloor: ${plan.bankrollFloor}n,

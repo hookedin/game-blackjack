@@ -13,14 +13,14 @@ test('a hand plays through the real wallet on the funding table, and survives a 
   const bridge = bridgeTo(w),
     store = memoryStore(),
     graph = (setup: any) => createBlackjack({ stake: setup.stake });
-  let round = new RoundClient(bridge, graph, blackjackFunding, { store, name: 'blackjack' }),
+  let round = new RoundClient(bridge, graph, { funding: blackjackFunding, store, name: 'blackjack' }),
     state = await round.start({ stake: 1000000n });
   assert.equal(round['plan']!.bankrollFloor, blackjackFunding.bankrollFloor, 'the table prices the hand');
   const before = await w.balance();
   for (let i = 0; !state.terminal && i < 64; i++) {
     state = await round.action(state.actions.includes('stand') ? 'stand' : state.actions[0]!);
     // The page reloads: a new client finds the hand where it was.
-    if (i === 1) round = new RoundClient(bridge, graph, blackjackFunding, { store, name: 'blackjack' });
+    if (i === 1) round = new RoundClient(bridge, graph, { funding: blackjackFunding, store, name: 'blackjack' });
     state = (await round.restore())!;
   }
   assert.equal(state.terminal, true);

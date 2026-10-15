@@ -13,7 +13,7 @@ import {
 } from '@hookedin/play/sdk/engine';
 import type { TransitionPlan } from '@hookedin/play/sdk/engine';
 
-import { admits, assessBet, betReturn, RETURN_SCALE } from '@hookedin/play/sdk/admits';
+import { assessBet, betReturn, RETURN_SCALE } from '@hookedin/play/sdk/admits';
 import { createBlackjack } from '../src/rules.ts';
 import { blackjackFunding } from '../src/funding.ts';
 
@@ -24,7 +24,6 @@ const graph = createBlackjack({ stake: UNIT });
 // The suite's one full compile: the generator's rules at the table's scale.
 const scale = UNIT / blackjackFunding.initialCash;
 const plan = compileGame(graph, {
-  admits,
   bankrollFloor: blackjackFunding.bankrollFloor * scale,
   cashQuantum: blackjackFunding.cashQuantum * scale,
   initialCash: UNIT,

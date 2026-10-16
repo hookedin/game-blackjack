@@ -1,4 +1,4 @@
-// Where `wrangler deploy` publishes dist/, which it builds first: a Cloudflare Worker that only serves static assets.
+// Where `wrangler deploy` deploys dist/, which it builds first: a Cloudflare Worker that only serves static assets.
 {
   "name": "hookedin-blackjack-game",
   "compatibility_date": "2026-09-01",

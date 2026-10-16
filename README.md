@@ -73,7 +73,7 @@ and `icon.svg`.
 
 ## Deploy
 
-Every push runs [the deploy workflow](.github/workflows/deploy.yml); a push to `main` also publishes `dist/` to
+Every push runs [the deploy workflow](.github/workflows/deploy.yml); a push to `main` also deploys `dist/` to
 Cloudflare as the Worker in [wrangler.jsonc](wrangler.jsonc). It needs the `CLOUDFLARE_API_TOKEN` secret and the
 `CLOUDFLARE_ACCOUNT_ID` variable. Every build takes play's newest `main`, and a build on `main` commits the lockfile it
 tested; play's release runs the workflow whenever its `main` moves.
